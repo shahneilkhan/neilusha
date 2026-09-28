@@ -476,13 +476,19 @@ function meeting(){
   }
 
   function watchWaitingRequests(){
+    let prevCount=0;
     unsubWaitList=nuWatchWaitingList(room,list=>{
       const box=$('#waitReqs');
-      if(!list.length){box.innerHTML='';return;}
-      box.innerHTML=`<div style="font-weight:600;margin-bottom:6px">🕓 ${t('requests')}</div>`+
-        list.map(p=>`<div class="wreq"><span>${(p.name||'Guest').replace(/</g,'&lt;')}</span><span class="acts">
-          <button class="btn" data-admit="${p.id}">${t('admitBtn')}</button>
-          <button class="btn line" data-deny="${p.id}">${t('denyBtn')}</button></span></div>`).join('');
+      if(!list.length){box.innerHTML='';}
+      else{
+        box.innerHTML=`<div style="font-weight:600;margin-bottom:6px">🕓 ${t('requests')}</div>`+
+          list.map(p=>`<div class="wreq"><span>${(p.name||'Guest').replace(/</g,'&lt;')}</span><span class="acts">
+            <button class="btn" data-admit="${p.id}">${t('admitBtn')}</button>
+            <button class="btn line" data-deny="${p.id}">${t('denyBtn')}</button></span></div>`).join('');
+      }
+      $('#pbadge').hidden=!list.length; $('#pbadge').textContent=list.length;
+      if(list.length>prevCount) toast('🙋 '+(list[list.length-1].name||'Guest')+' '+t('waiting'));
+      prevCount=list.length;
     });
   }
   $('#waitReqs').addEventListener('click',e=>{
