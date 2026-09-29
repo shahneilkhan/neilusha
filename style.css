@@ -83,6 +83,8 @@ dialog{border:0;border-radius:18px;padding:0;width:min(400px,92vw);box-shadow:0 
 .cb{position:relative;flex:none;width:48px;height:48px;border-radius:50%;border:0;background:#ffffff22;color:#fff;font-size:1.25rem;cursor:pointer}
 .cb.off{background:var(--red)}
 .cb.on{background:var(--emerald)}
+#recBtn.on{background:var(--red);animation:recpulse 1.2s ease-in-out infinite}
+@keyframes recpulse{50%{opacity:.55}}
 .cb.leave{background:var(--red);width:64px;border-radius:24px}
 .cb i{position:absolute;top:-2px;right:-2px;background:var(--gold);color:var(--deep);font-style:normal;font-size:.7rem;font-weight:700;border-radius:10px;padding:0 6px}
 .panel{position:absolute;right:12px;top:58px;bottom:84px;width:340px;background:#fff;color:var(--ink);border-radius:16px;display:flex;flex-direction:column;z-index:4;box-shadow:0 10px 40px #0007}
