@@ -27,6 +27,18 @@ function toast(msg,force){
   const d=document.createElement('div'); d.className='toast'; d.textContent=msg;
   $('#toasts').appendChild(d); setTimeout(()=>d.remove(),3500);
 }
+/* real OS notification when the tab is in the background — same permission the person granted for "Notifications" in Settings */
+function notify(title,body){
+  if(!S.notif) return;
+  if(!('Notification' in window)) return;
+  if(Notification.permission!=='granted') return;
+  if(!document.hidden) return; // tab already visible, the in-app toast is enough
+  try{ const n=new Notification(title,{body}); n.onclick=()=>{window.focus();n.close();}; }catch(e){}
+}
+function askNotifyPermission(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission==='default') Notification.requestPermission();
+}
 function applyLang(){
   document.documentElement.lang=S.lang;
   document.documentElement.dir=S.lang==='ar'?'rtl':'ltr';
@@ -69,7 +81,7 @@ function injectUI(){
   $('#sName').oninput=e=>{S.name=e.target.value.trim()||'You';changed();};
   $('#sNative').onchange=e=>{S.native=e.target.value;changed();};
   $('#sLang').onchange=e=>setLang(e.target.value);
-  $('#sNotif').onchange=e=>{S.notif=e.target.checked;changed();};
+  $('#sNotif').onchange=e=>{S.notif=e.target.checked;changed();if(S.notif)askNotifyPermission();};
   $('#sCaps').onchange=e=>{S.caps=e.target.checked;changed();};
   $$('[data-open-settings]').forEach(b=>b.onclick=()=>$('#set').showModal());
 }
@@ -174,6 +186,7 @@ function meeting(){
   const roomSafe=room.replace(/[^a-z0-9-]/gi,'').toLowerCase()||'room';
   $('#roomCode').textContent=room;
   const live=window.NU_FB_READY && window.nuDb;
+  if(S.notif) askNotifyPermission();
   const uid=user?user.uid:localUid();
   let mic=store.get('mic',true),cam=store.get('cam',true),myHand=false,sharing=false,scene='none',blur=false,customImg=null,unread=0,panelTab=null,spk=0;
   let people=[{id:uid,name:S.name,native:S.native,me:true}];
@@ -420,7 +433,7 @@ function meeting(){
     d.innerHTML='<b></b><p></p><small></small>';
     d.children[0].textContent=from; d.children[1].textContent=text; d.children[2].textContent=note||'';
     $('#msgs').appendChild(d); $('#msgs').scrollTop=1e6;
-    if(!me&&panelTab!=='chat'){unread++;$('#badge').textContent=unread;$('#badge').hidden=false;toast('✉️ '+from);}
+    if(!me&&panelTab!=='chat'){unread++;$('#badge').textContent=unread;$('#badge').hidden=false;toast('✉️ '+from);notify(from,text);}
   }
   $('#chatForm').onsubmit=e=>{
     e.preventDefault();
@@ -515,7 +528,7 @@ function meeting(){
             <button class="btn line" data-deny="${p.id}">${t('denyBtn')}</button></span></div>`).join('');
       }
       $('#pbadge').hidden=!list.length; $('#pbadge').textContent=list.length;
-      if(list.length>prevCount) toast('🙋 '+(list[list.length-1].name||'Guest')+' '+t('waiting'));
+      if(list.length>prevCount){const nm=list[list.length-1].name||'Guest';toast('🙋 '+nm+' '+t('waiting'));notify(t('requests'),nm);}
       prevCount=list.length;
     });
   }
@@ -529,7 +542,7 @@ function meeting(){
     unsubP=nuWatchParticipants(room,list=>{
       const wasCount=people.length;
       people=[people[0],...list.filter(p=>p.id!==uid).map(p=>({id:p.id,name:p.name||'Guest',native:p.native||'en',hand:!!p.hand,mic:p.mic,cam:p.cam,me:false}))];
-      if(people.length>wasCount) toast('👋 '+(people[people.length-1].name)+' '+t('joined'));
+      if(people.length>wasCount){const nm=people[people.length-1].name;toast('👋 '+nm+' '+t('joined'));notify(nm,t('joined'));}
       list.forEach(handleIncomingSpeech);
       tryConnectAll();
       render();
@@ -538,7 +551,7 @@ function meeting(){
     if(isHost) watchWaitingRequests();
     unsubSelf=nuWatchSelf(room,uid,exists=>{
       if(!exists && !leaving){
-        toast('🚫 '+t('kicked'),true);
+        toast('🚫 '+t('kicked'),true);notify('NeilUsha',t('kicked'));
         setTimeout(()=>location.href='dashboard.html',1200);
       }
     });
